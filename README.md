@@ -1,12 +1,13 @@
 # CHIP-8 Emulator (C++17)
 
-A modular implementation of the CHIP-8 virtual machine written in modern C++17. This repository consolidates and documents a previously developed emulator project, reorganized for clarity and public presentation.
+A modular implementation of the CHIP-8 virtual machine written in modern C++17. This project focuses on instruction-level execution, memory modeling, and stack-based control flow within a constrained hardware architecture.
+
+---
 
 ## Overview
 
-CHIP-8 is a simple interpreted programming language created for the RCA COSMAC VIP in the 1970s. This project recreates the core runtime architecture, focusing on instruction-level execution and memory modeling.
+CHIP-8 is a simple interpreted programming language originally developed for the RCA COSMAC VIP. This implementation recreates the core runtime components:
 
-### System Specifications
 * **Memory:** 4KB RAM address space (0x000 - 0xFFF).
 * **Registers:** 16 general-purpose 8-bit registers (V0–VF).
 * **Stack:** 16-level call stack for subroutines.
@@ -15,62 +16,83 @@ CHIP-8 is a simple interpreted programming language created for the RCA COSMAC V
 * **Display:** 64x32 monochrome display buffer.
 * **Instruction Set:** Full 35-opcode set.
 
+---
+
 ## Architecture
 
 ### Memory Model
 * **RAM:** Implemented via `std::array<uint8_t, 4096>`.
 * **Program Counter:** Initialized at `0x200` (standard for most ROMs).
-* **Fontset:** Loaded into the reserved interpreter memory region.
+* **Fontset:** Loaded into the reserved interpreter memory region (0x050 - 0x0A0).
 * **Stack:** Fixed-size array with manual stack pointer (SP) control.
 
-### Fetch-Decode-Execute Cycle
-The CPU cycle follows a standard fetch-decode-execute pipeline:
+### Fetch–Decode–Execute Cycle
+The CPU cycle follows a standard pipeline:
 1. **Fetch:** `uint16_t opcode = (memory[pc] << 8) | memory[pc + 1];`
-2. **Decode:** Bitwise masking and shifting extract instruction fields (X, Y, N, NNN).
+2. **Decode:** Bitmasking and shifting extract instruction fields (X, Y, N, NNN).
 3. **Execute:** Handled through a structured switch-based opcode dispatch.
 
-### Graphics Logic
-* **Buffer:** 64x32 monochrome pixel array.
+### Graphics & Logic
 * **Rendering:** XOR-based sprite drawing logic.
-* **Collision Detection:** If a pixel flips from 1 to 0 during rendering, VF is set to 1.
+* **Collision Detection:** If a pixel flips from 1 to 0 during rendering, the VF register is set to 1.
+
+---
 
 ## Implementation Highlights
 
 ### Hardware-Accurate Carry (8xy4)
-To mirror hardware behavior and prevent silent overflows:
-
-    uint16_t sum = V[X] + V[Y];
-    V[0xF] = (sum > 0xFF); // Carry flag set on overflow
-    V[X] = static_cast<uint8_t>(sum & 0xFF);
+Prevents silent overflow of 8-bit registers by using a wider temporary type:
+```cpp
+uint16_t sum = V[X] + V[Y];
+V[0xF] = (sum > 0xFF); // Carry flag set on overflow
+V[X] = static_cast<uint8_t>(sum & 0xFF);
+```
 
 ### Stack Management
-* Subroutine calls push the current PC to the stack before jumping.
-* Manual stack pointer increment/decrement ensures proper return alignment.
-* Validated against standard test ROMs for nested call stability.
+* **Subroutine Calls (2nnn):** Pushes the current Program Counter (PC) onto the stack and increments the stack pointer before jumping to address `nnn`.
+* **Return Logic (00EE):** Restores the PC from the top of the stack and decrements the stack pointer, ensuring correct return alignment for nested calls.
+* **Stability:** Verified against standard test ROMs to ensure stack pointer limits (0-15) are respected and return addresses are preserved.
 
-## Design Decisions
-* **Type Safety:** Use of fixed-width integers (uint8_t, uint16_t) for cross-platform consistency.
-* **Memory Safety:** Utilized std::array instead of raw pointers for memory bounds safety.
-* **Modularity:** Clear separation between CPU logic and the rendering/IO layer.
-* **Low Abstraction:** Explicit control over memory and stack to maintain performance and transparency.
+---
+
+## Usage
+
+### Build
+```bash
+g++ -std=c++17 -Iinclude src/Chip8.cpp main.cpp -o chip8
+```
+
+### Run
+```bash
+./chip8 path/to/rom.ch8
+```
+
+---
 
 ## Project Structure
+```text
+.
+├── include/
+│   └── Chip8.hpp    # Core emulator class & state definition
+├── src/
+│   └── Chip8.cpp    # Opcode implementations & CPU logic
+└── main.cpp         # Entry point & emulation loop
+```
 
-    .
-    ├── include/
-    │   └── Chip8.hpp    # Core emulator class & state definition
-    ├── src/
-    │   └── Chip8.cpp    # Opcode implementations & CPU logic
-    └── main.cpp         # Entry point & emulation loop
+---
 
 ## Current Status
-* [x] Core CPU implementation complete.
-* [x] Stable Fetch-Decode-Execute cycle.
-* [x] Verified with classic ROMs (e.g., PONG).
-* [ ] Sound support (Beeper).
-* [ ] Graphical Front-end (SDL2/SFML).
+- [x] Core CPU instruction set implemented.
+- [x] Stable fetch/decode/execute loop.
+- [x] Verified with classic ROMs (e.g., PONG).
+- [x] Display and collision logic functional.
+- [x] Stack and timers operational.
+- [ ] Sound support (Beeper).
+- [ ] Graphical Front-end integration (SDL2/SFML).
+
+---
 
 ## References
-* Cowgod's CHIP-8 Technical Reference
+* Cowgod’s CHIP-8 Technical Reference
 * RCA COSMAC VIP Manual (1978)
 * Mastering CHIP-8 (Matthew Mikolay)
