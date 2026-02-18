@@ -82,14 +82,14 @@ g++ -std=c++17 -Iinclude src/Chip8.cpp main.cpp -o chip8
 ---
 
 ## Current Status
-- [x] Core CPU instruction set implemented.
-- [x] Stable fetch/decode/execute loop.
-- [x] Verified with classic ROMs (e.g., PONG).
-- [x] Display and collision logic functional.
-- [x] Stack and timers operational.
-- [ ] Sound support (Beeper).
-- [ ] Graphical Front-end integration (SDL2/SFML).
 
+- [x] Core CPU instruction set implemented
+- [x] Stable fetch/decode/execute loop
+- [x] Verified with classic ROMs (e.g., PONG)
+- [x] Display and collision logic functional
+- [x] Stack and timers operational
+- [ ] SDL2 graphical front-end (planned)
+- [ ] Extended opcode variants (planned)
 ---
 
 ## References
